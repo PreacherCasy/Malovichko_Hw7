@@ -1,0 +1,66 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Malovichko_Hw7.md</title><script type="text/javascript">
+//<![CDATA[
+window.__cfRocketOptions = {byc:0,p:0,petok:"aeae7df1b339f93b3e8af3b10a515bfcd5517570-1524316505-1800"};
+//]]>
+</script>
+<script type="text/javascript" src="https://ajax.cloudflare.com/cdn-cgi/scripts/935cb224/cloudflare-static/rocket.min.js"></script>
+<style></style></head><body id="preview">
+<h1><a id="Malovichko_Hw7_0"></a>Malovichko_Hw7</h1>
+<h2><a id="__2"></a>Описание работы</h2>
+<p>На этой неделе мы познакомимся с MrBayes (v3.2.6 x64) - программой, осуществляющей построение филогенетических деревьев при помощи алгоритма BI (Bayesian Inference).</p>
+<h2><a id="__5"></a>Ход работы</h2>
+<h3><a id="_1_7"></a>Задание 1</h3>
+<p>Переведем файл с исходным выравниванием в <em>nexus</em>-формат при помощи <strong>seqmagick</strong> (версия не указана, <a href="https://github.com/fhcrc/seqmagick">гит авторов</a>. При помощи второй строчки кода избавимся от одинарных кавычек, обрамляющих названия некоторых таксонов.</p>
+<pre><code class="language-bash">seqmagick convert --output-format nexus --alphabet dna SUP35_aln.best.fas SUP35_aln.best.nex
+cat SUP35_aln.best.nex | sed <span class="hljs-string">'s|["'</span>\<span class="hljs-string">''</span>]||g<span class="hljs-string">' &gt; done.nex
+</span></code></pre>
+<h3><a id="_2_15"></a>Задание 2</h3>
+<p>Запустим MrBayes в интерактивном режиме:</p>
+<pre><code class="language-bash">mb
+</code></pre>
+<h3><a id="_3_22"></a>Задание 3</h3>
+<p>Прочитаем файл в запущенном MrBayes:</p>
+<pre><code class="language-bash">execute done.nex
+</code></pre>
+<h3><a id="_4_30"></a>Задание 4</h3>
+<p>Посмотрим справку по выбору модели и установим необходимую. Затем проверим, поняла ли нас программа, при помощи команды <em>showmodel</em>.</p>
+<pre><code class="language-bash"><span class="hljs-built_in">help</span> lset
+lset nst=<span class="hljs-number">6</span> rates=invgamma
+showmodel
+</code></pre>
+<h3><a id="_5_40"></a>Задание 5</h3>
+<p>Теперь запустим программу на 100000 генераций и посмотрим, сошлась ли наша модель при пороговом значении average standard deviation of split frequencies &lt; 0.01:</p>
+<pre><code class="language-bash">mcmc ngen=<span class="hljs-number">100000</span>
+</code></pre>
+<p>По итогам работы программы значение отклонения split frequencies равно 0.19, что меньше выставленного нами порогового значения. После добавления еще 25k генераций ситуация не улучшилась. Аналогичная ситуация складывается после добавления еще 50k генераций. Если же сыграть по-крупному и добавить еще 100k генераций, то итоговое отклонение приходит к значению 0.008825.</p>
+<h3><a id="_6_47"></a>Задание 6</h3>
+<p>Суммируем параметры модели:</p>
+<pre><code class="language-bash">sump
+</code></pre>
+<p>Программа выдаст следующий текст:</p>
+<pre><code>   Model parameter summaries over the runs sampled in files
+     &quot;done.nex.run1.p&quot; and &quot;done.nex.run2.p&quot;:
+     Summaries are based on a total of 828 samples from 2 runs.
+     Each run produced 551 samples of which 414 samples were included.
+     Parameter summaries saved to file &quot;done.nex.pstat&quot;.
+</code></pre>
+<p>Теперь просуммируем параметры модели, выставив значение отжига, по которому будем затем строить дерево:</p>
+<pre><code class="language-bash">sump burnin=<span class="hljs-number">9000</span>
+</code></pre>
+<h3><a id="_7_65"></a>Задание 7</h3>
+<p>Теперь суммируем полученные деревья:</p>
+<pre><code class="language-bash">sumt burnin=<span class="hljs-number">9000</span>
+</code></pre>
+<p>Результат сохранен в файл формата <em>.con.tre</em>.</p>
+<h3><a id="_8_72"></a>Задание 8</h3>
+<p>Визуализируем дерево в FigTree (v1.4.2.). Заметим, что если бы все домашние работы по филогенетике выполнялись бы вовремя, то визуализация производилась бы в <em>phylobayes</em> + <em>ape</em> + <em>ggtree</em>, но увы. Результат сохранен под названием Fig1.png в данном репозитории, поддержки узлов представлены апостериорной вероятностью для данных узлов.<br>
+Далее, возьмем одно из деревьев из предыдущего отчета для RaxML (Fig2.png; поддержки узлов представленные значениями бутстрепа в процентном выражении). Вспомним, что мы использовали консенсус T_70 (в <strong>RAxML v8.2.4</strong>). Опытным путем приходим, что совпадение топологии достигается при выставлении параметра T = 47-50.</p>
+<h2><a id="_77"></a>Выводы</h2>
+<ol>
+<li>BI требует для построения оптимального (с точки зрения отсечки по отклонению частот) дерева разного количества генераций при каждом запуске.</li>
+<li>Топология BI-дерева также зависит (здесь не показано) от выставленного значения отжига при построении дерева на основании результатов алгоритма.</li>
+<li>Тем не менее, разрешение топологии деревьев достигается в BI без введения нестрогих отсечек, как в случае консенсусов в RAxML.</li>
+</ol>
+<p>Работа оформлена в <a href="https://dillinger.io/">Dillinger</a></p>
+
+</body></html>
